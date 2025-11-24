@@ -6,16 +6,31 @@ import {
   RetrieveAndGenerateCommand,
 } from '@aws-sdk/client-bedrock-agent-runtime';
 
-const REGION = process.env.AWS_REGION;
-const KNOWLEDGE_BASE_ID = process.env.KNOWLEDGE_BASE_ID;
-const MODEL_ARN = process.env.MODEL_ARN;
+const REGION = process.env.AWS_REGION?.trim();
+const KNOWLEDGE_BASE_ID = process.env.KNOWLEDGE_BASE_ID?.trim();
+const MODEL_ARN = process.env.MODEL_ARN?.trim();
+const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID?.trim();
+const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY?.trim();
+const AWS_SESSION_TOKEN = process.env.AWS_SESSION_TOKEN?.trim();
 
 if (!REGION || !KNOWLEDGE_BASE_ID || !MODEL_ARN) {
   console.error('Missing required env vars. Check .env for AWS_REGION, KNOWLEDGE_BASE_ID, MODEL_ARN');
   process.exit(1);
 }
 
-const client = new BedrockAgentRuntimeClient({ region: REGION });
+if (!AWS_ACCESS_KEY_ID || !AWS_SECRET_ACCESS_KEY) {
+  console.error('Missing AWS credentials. Check .env for AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY');
+  process.exit(1);
+}
+
+const client = new BedrockAgentRuntimeClient({
+  region: REGION,
+  credentials: {
+    accessKeyId: AWS_ACCESS_KEY_ID,
+    secretAccessKey: AWS_SECRET_ACCESS_KEY,
+    sessionToken: AWS_SESSION_TOKEN,
+  },
+});
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -69,4 +84,6 @@ app.listen(PORT, () => {
   console.log(`📡 API endpoint: http://localhost:${PORT}/api/chat`);
   console.log(`Region: ${REGION}`);
   console.log(`Knowledge Base ID: ${KNOWLEDGE_BASE_ID}`);
+  console.log(`Access Key: ${AWS_ACCESS_KEY_ID?.substring(0, 10)}...`);
+  console.log(`✅ Using credentials from .env file`);
 });
